@@ -26,3 +26,7 @@ Buffer的属性
 1. FileChannel
 常用方法：write，read，transferFrom(从目标通道拷贝数据到本通道)，transferTo(主语都是当前的FileChannel)
 ServerSocketChannel，SocketChannel，DataGramChannel(UDP读写)
+---
+### Byte，Channel注意事项
+1. ByteBuffer put什么类型，就要get什么类型，否则会抛出异常
+2. 可以将一个普通的Buffer转换成只读buffer buffer.asReadOnlyBuffer
