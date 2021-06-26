@@ -30,3 +30,4 @@ ServerSocketChannel，SocketChannel，DataGramChannel(UDP读写)
 ### Byte，Channel注意事项
 1. ByteBuffer put什么类型，就要get什么类型，否则会抛出异常
 2. 可以将一个普通的Buffer转换成只读buffer buffer.asReadOnlyBuffer
+3. MappedByteBuffer 可以让文件直接在内存（堆外内存）中进行修改，修改同步到文件又NIO完成
