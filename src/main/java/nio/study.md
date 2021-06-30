@@ -31,3 +31,17 @@ ServerSocketChannel，SocketChannel，DataGramChannel(UDP读写)
 1. ByteBuffer put什么类型，就要get什么类型，否则会抛出异常
 2. 可以将一个普通的Buffer转换成只读buffer buffer.asReadOnlyBuffer
 3. MappedByteBuffer 可以让文件直接在内存（堆外内存）中进行修改，修改同步到文件又NIO完成
+---
+### selector
+selector - 能够检测多个**注册**的通道上是否有**事件**发生
+selector.select() - blocking，直到有事件发生
+selector.select(long timeOut) - blocking，一直到超时时间到
+selector.selectNow() - non-blocking，return right now
+
+1. 当客户端连接时，会通过ServerSocketChannel得到SocketChannel
+2. 将socketChannel注册到Selector上，一个Selector上可以注册多个SocketChannel
+3. 注册后返回SelectionKey，会和该Selector关联（集合）
+4. Selector进行监听 select方法，返回有事件发生的通道个数
+5. 进一步得到各个SelectionKey（有事件发生）
+6. 在通过SelectionKey获取Channel
+7. 可以通过得到的Channel完成业务处理
