@@ -33,6 +33,8 @@ public class NioServer {
             Iterator<SelectionKey> keyIterator = selectionKeys.iterator();
             while (keyIterator.hasNext()) {
                 SelectionKey selectionKey = keyIterator.next();
+                //手动移除当前selectionKey，防止重复操作
+                keyIterator.remove();
                 //根据key的事件类型做对应处理
                 if (selectionKey.isAcceptable()) {
                     //OP_ACCEPT事件来了
@@ -49,9 +51,9 @@ public class NioServer {
                     ByteBuffer byteBuffer = (ByteBuffer) selectionKey.attachment();
                     channel.read(byteBuffer);
                     System.out.println("从客户端获取数据" + new String(byteBuffer.array()));
+                    channel.write(ByteBuffer.wrap("获取数据成功".getBytes()));
+                    System.out.println("响应数据成功");
                 }
-                //手动移除当前selectionKey，防止重复操作
-                keyIterator.remove();
             }
         }
 
