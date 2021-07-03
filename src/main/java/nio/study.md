@@ -45,3 +45,56 @@ selector.selectNow() - non-blocking，return right now
 5. 进一步得到各个SelectionKey（有事件发生）
 6. 在通过SelectionKey获取Channel
 7. 可以通过得到的Channel完成业务处理
+---
+### zero copy
+nio还可以零拷贝
+nio的优点其实是在netty中也有体现的
+所以netty为什么这么快 
+1. IO多路复用
+2. 零拷贝
+--- 
+### IO模型
+#### 特点
+1. 采用阻塞IO模式获取输入的数据
+2. 每个链接都需要独立的线程完成数据的输入
+#### 问题
+1. 并发数很大的时候，会创建大量的线程，占用系统资源
+2. 会被read阻塞
+### reactor模式
+reactor 反应器模式，分发者模式（dispatcher），通知者模式（notifier）
+1. 基于IO复用模型
+2. 基于线程池复用线程资源
+#### 说明
+1. 基于事件驱动
+2. 服务器端程序处理传入的多个请求，并将它们同步分派到相应的线程处理
+3. Reactor模式使用IO复用监听事件。收到事件后，分发给某个线程。
+#### 主从Reactor多线程
+1. Reactor主线程MainReactor对象通过select监听连接事件，受到事件后，通过Acceptor处理连接事件
+2. 当Acceptor处理连接事件后，MainReactor将连接分配给SubReactor
+3. SubReactor将两节加入到连接队列进行监听，并创建handler进行各种事件处理
+4. 当有新事件发生时，SubReactor就会调用对应的handler处理
+5. handler通过read读取数据，分发给后面的worker线程处理
+6. worker线程池分配独立的worker线程进行业务处理，并返回结果
+7. handler受到响应的结果后，再通过send将结果返回给client
+8. Reactor主线程可以对应多个Reactor子线程，即MainReactor可以关联多个
+---
+## netty
+1. BossGroup线程维护Selector，只关心Accept
+2. 当接收到Accept事件，获取到相关的SocketChannel，封装成NIOSocketChannel，并注册到Worker线程（事件循环）并注册
+3. 当Worker线程坚挺到selector中通道发生事件后，就进行处理（由handler），注意handler事先加入到通道了
+---
+### 深入理解
+1. Netty抽象出两组线程池 BossGroup-专门负责接收客户端的连接，WorkerGroup 专门负责网络的读写
+2. BossGroup和WorkerGroup 类型都是NioEventLoopGroup
+3. NioEventLoopGroup 相当于一个事件循环组，这个组中含有多个事件循环，每一个事件循环是NioEventLoop
+4. NioEventLoop 表示一个不断循环的执行处理任务的线程，每个NioEventLoop都有一个selector，用于监听绑定其上的Socket的网络通讯
+5. NioEventLoopGroup 可以有多个线程，既可以含有多个NioEventLoop
+6. 每个Boss NioEventLoop循环执行步骤有三步
+    1. 轮询accept事件
+    2. 处理accept事件，与client建立连接，生成NIOSocketChannel，并将其注册到某个Worker NiOEventLoop上的selector
+    3. 处理任务队列的任务，即runAllTasks
+7. 每个Worker NioEventLoop循环执行的步骤
+    1. 轮询read，write事件
+    2. 处理i/o事件，即read，write事件，在对应的NioSocketChannel处理
+    3. 处理任务队列的任务 即runAllTasks
+8. 每个Worker NioEventLoop处理业务时，会使用pipeline（管道），pipeline中包含了channel，即通过pipeline可以获取到对应的通道，管道中维护了很多的处理区
