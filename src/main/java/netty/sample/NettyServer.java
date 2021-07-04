@@ -1,11 +1,13 @@
 package netty.sample;
 
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.*;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
 
 /**
  * @author : web
@@ -18,6 +20,7 @@ public class NettyServer {
             //创建BossGroup和WorkerGroup
             //boss group只是处理连接请求，真正和客户端业务处理交个worker group
             //都是无限循环
+            // 默认 cupNum*2
             bossGroup = new NioEventLoopGroup();
             workerGroup = new NioEventLoopGroup();
             //创建服务器端的启动对象，配置参数
@@ -37,10 +40,9 @@ public class NettyServer {
                         /**
                          * 给Pipeline 设置处理器
                          * @param ch ch
-                         * @throws Exception Exception
                          */
                         @Override
-                        protected void initChannel(SocketChannel ch) throws Exception {
+                        protected void initChannel(SocketChannel ch) {
                             ch.pipeline().addLast(new NettyServerHandler());
                         }
                     });
@@ -48,6 +50,7 @@ public class NettyServer {
             //绑定一个端口并且同步，生成了一个channel Future对象
             //绑定端口
             ChannelFuture channelFuture = serverBootstrap.bind(6668).sync();
+            System.out.println(channelFuture.getClass().getName());
             //对关闭通道进行监听
             channelFuture.channel().closeFuture().sync();
         } finally {

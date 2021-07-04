@@ -98,3 +98,11 @@ reactor 反应器模式，分发者模式（dispatcher），通知者模式（no
     2. 处理i/o事件，即read，write事件，在对应的NioSocketChannel处理
     3. 处理任务队列的任务 即runAllTasks
 8. 每个Worker NioEventLoop处理业务时，会使用pipeline（管道），pipeline中包含了channel，即通过pipeline可以获取到对应的通道，管道中维护了很多的处理区
+---
+### Future 说明
+1. 表示异步的执行结果，可以通过它提供的方法来检测执行是否完成
+2. ChannelFuture是一个接口，我们可以添加监听器，当监听的时间发生时，会被通知到
+3. 底层实现原理其实是利用Promise类，Promise类的实现逻辑是，当添加listener的时候，将listener+future变成一个runnable,
+这个runnable执行listener.operationComplete(future)方法，并将这个runnable放入eventLoop的execute里面，eventLoop会把他放入到taskQueue中
+这样当future执行完了之后，便再回去执行这个runnable。当然这只是主要逻辑，在调用setSuccess或者addListener这些方法的时候，马上也会调用isDone方法
+判断是否成功，如果成功直接去调用回调函数。

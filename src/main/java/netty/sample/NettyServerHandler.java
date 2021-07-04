@@ -4,7 +4,10 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.EventLoop;
 import io.netty.util.CharsetUtil;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * 1.自顶一个handler 需要继承netty 规定好的某个HandlerAdapter
@@ -30,11 +33,37 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
      */
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        System.out.println("server ctx : " + ctx);
-        //将 msg 转成 ByteBuf
-        ByteBuf buf = (ByteBuf) msg;
-        System.out.println("客户端发送消息是 ：" + buf.toString(CharsetUtil.UTF_8));
+        //耗时任务 -》 异步任务 -》 提交该channel对应的NioEventLoop的taskQueue中
+        //解决方案1，用户自定义普通任务
+        ctx.channel().eventLoop().execute(() -> {
+            try {
+                Thread.sleep(1000 * 10);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println(Thread.currentThread().getName());
+            //将 msg 转成 ByteBuf
+            ByteBuf buf = (ByteBuf) msg;
+            System.out.println("客户端发送消息是 ：" + buf.toString(CharsetUtil.UTF_8));
+            ctx.writeAndFlush(Unpooled.copiedBuffer("hello world client", CharsetUtil.UTF_8));
+        });
+        //解决方案2 用户自定义定义任务 -》 该任务提交到schedule taskQueue
+        EventLoop eventExecutors = ctx.channel().eventLoop();
+
+        ctx.channel().eventLoop().schedule(() -> {
+            try {
+                Thread.sleep(1000 * 10);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println(Thread.currentThread().getName());
+            //将 msg 转成 ByteBuf
+            ByteBuf buf = (ByteBuf) msg;
+            System.out.println("客户端发送消息是 ：" + buf.toString(CharsetUtil.UTF_8));
+            ctx.writeAndFlush(Unpooled.copiedBuffer("hello world client", CharsetUtil.UTF_8));
+        },5, TimeUnit.SECONDS);
         System.out.println("客户端地址" + ctx.channel().remoteAddress());
+        System.out.println("go on");
     }
 
     @Override
